@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Affichage PNG</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(45deg, #222 25%, transparent 25%),
+        linear-gradient(-45deg, #222 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #222 75%),
+        linear-gradient(-45deg, transparent 75%, #222 75%);
+      background-size: 32px 32px;
+      background-position: 0 0, 0 16px, 16px -16px, -16px 0px;
+      background-color: #111;
+      font-family: system-ui, sans-serif;
+    }
+    main {
+      width: min(92vw, 720px);
+      padding: 24px;
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      text-align: center;
+    }
+    img {
+      display: block;
+      max-width: 100%;
+      max-height: 70vh;
+      margin: 0 auto;
+      image-rendering: auto;
+      filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.45));
+    }
+    p {
+      margin: 16px 0 0;
+      color: #ddd;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="icon-computer-512.png" alt="Aperçu du fichier PNG" />
+    <p>Fichier affiché : icon-computer-512.png</p>
+  </main>
+</body>
+</html>
