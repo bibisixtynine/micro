@@ -3,57 +3,924 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Affichage PNG</title>
+  <title>Combat automatique : Fusée vs Alien</title>
   <style>
     :root {
       color-scheme: dark;
+      --bg-1: #050816;
+      --bg-2: #0c1630;
+      --panel: rgba(9, 15, 31, 0.82);
+      --text: #eef4ff;
+      --muted: #9cb2d9;
+      --rocket: #ff6b6b;
+      --alien: #7ed957;
+      --track: rgba(255, 255, 255, 0.14);
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
     }
+
     * {
       box-sizing: border-box;
     }
+
     body {
       margin: 0;
       min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12) 0 1px, transparent 2px),
+        radial-gradient(circle at 80% 30%, rgba(255,255,255,0.1) 0 1px, transparent 2px),
+        radial-gradient(circle at 30% 70%, rgba(255,255,255,0.1) 0 1.5px, transparent 2px),
+        radial-gradient(circle at 70% 80%, rgba(255,255,255,0.08) 0 1px, transparent 2px),
+        linear-gradient(180deg, var(--bg-2), var(--bg-1));
+      background-size: 220px 220px, 260px 260px, 320px 320px, 280px 280px, auto;
       display: grid;
       place-items: center;
-      background:
-        linear-gradient(45deg, #222 25%, transparent 25%),
-        linear-gradient(-45deg, #222 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #222 75%),
-        linear-gradient(-45deg, transparent 75%, #222 75%);
-      background-size: 32px 32px;
-      background-position: 0 0, 0 16px, 16px -16px, -16px 0px;
-      background-color: #111;
-      font-family: system-ui, sans-serif;
+      padding: 18px;
+      overflow: hidden;
     }
-    main {
-      width: min(92vw, 720px);
-      padding: 24px;
-      border-radius: 20px;
-      background: rgba(0, 0, 0, 0.35);
+
+    .game-shell {
+      width: min(100%, 1080px);
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
       backdrop-filter: blur(10px);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 18px;
+      align-items: center;
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .fighter-card {
+      display: grid;
+      gap: 8px;
+    }
+
+    .fighter-card.right {
+      text-align: right;
+    }
+
+    .fighter-name {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .health-track {
+      width: 100%;
+      height: 14px;
+      background: var(--track);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .health-bar {
+      height: 100%;
+      width: 100%;
+      transition: width 220ms ease;
+      border-radius: 999px;
+    }
+
+    .health-bar.rocket {
+      background: linear-gradient(90deg, #ff8a65, var(--rocket));
+    }
+
+    .health-bar.alien {
+      background: linear-gradient(90deg, #a7f26d, var(--alien));
+    }
+
+    .center-panel {
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      min-width: 180px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(1.1rem, 2vw, 1.45rem);
+      letter-spacing: 0.04em;
+    }
+
+    .status {
+      min-height: 1.2em;
+      color: #cfe0ff;
+      font-size: 0.95rem;
       text-align: center;
     }
-    img {
-      display: block;
-      max-width: 100%;
-      max-height: 70vh;
-      margin: 0 auto;
-      image-rendering: auto;
-      filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.45));
+
+    .restart-btn {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #6ea8ff, #8d7dff);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(93, 114, 255, 0.28);
+      transition: transform 140ms ease, filter 140ms ease;
     }
-    p {
-      margin: 16px 0 0;
-      color: #ddd;
-      font-size: 14px;
+
+    .restart-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+    }
+
+    .arena {
+      position: relative;
+      height: min(72vh, 620px);
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(100, 180, 255, 0.1), transparent 30%),
+        linear-gradient(180deg, rgba(7, 11, 25, 0.2), rgba(7, 11, 25, 0.6));
+      isolation: isolate;
+    }
+
+    .star-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.45);
+      opacity: 0.9;
+    }
+
+    .planet {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(0.4px);
+    }
+
+    .planet-one {
+      right: -80px;
+      bottom: -80px;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle at 35% 35%, #6dc4ff, #3750a3 60%, #1a2256 100%);
+      opacity: 0.55;
+      box-shadow: inset -22px -18px 40px rgba(0,0,0,0.35), 0 0 50px rgba(86,120,255,0.22);
+      z-index: 1;
+    }
+
+    .planet-two {
+      left: -40px;
+      top: 42px;
+      width: 110px;
+      height: 110px;
+      background: radial-gradient(circle at 30% 30%, #ffdca8, #d4833d 58%, #5e2f18 100%);
+      opacity: 0.82;
+      box-shadow: inset -14px -12px 24px rgba(0,0,0,0.28), 0 0 30px rgba(255, 179, 102, 0.18);
+      z-index: 1;
+    }
+
+    .planet-three {
+      left: 18%;
+      bottom: -58px;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle at 35% 35%, #d6a8ff, #7e5cff 62%, #2b205f 100%);
+      opacity: 0.45;
+      box-shadow: inset -16px -14px 28px rgba(0,0,0,0.3), 0 0 34px rgba(160, 128, 255, 0.18);
+      z-index: 1;
+    }
+
+    .planet-ring {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 150%;
+      height: 34%;
+      border: 3px solid rgba(255, 231, 202, 0.35);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) rotate(-18deg);
+    }
+
+    .fighter {
+      position: absolute;
+      width: 128px;
+      height: 128px;
+      transform: translate(-50%, -50%);
+      user-select: none;
+      pointer-events: none;
+      transition: filter 140ms ease;
+    }
+
+    .fighter img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.45));
+    }
+
+    .fighter.alien img {
+      transform: scaleX(-1);
+    }
+
+    .fighter.hit {
+      filter: brightness(1.6);
+    }
+
+    .missile {
+      position: absolute;
+      width: 30px;
+      height: 8px;
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 14px currentColor;
+    }
+
+    .missile.rocket {
+      background: linear-gradient(90deg, #ffd166, #ff6b6b);
+      color: #ff9966;
+    }
+
+    .missile.alien {
+      background: linear-gradient(90deg, #9eff8f, #32d27a);
+      color: #79ff99;
+    }
+
+    .explosion {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: pop 420ms ease-out forwards;
+    }
+
+    .explosion.rocket {
+      background: radial-gradient(circle, #fff1a8 0%, #ff8a5b 45%, rgba(255, 106, 71, 0) 70%);
+    }
+
+    .explosion.alien {
+      background: radial-gradient(circle, #ecffd8 0%, #88ff8c 45%, rgba(94, 255, 152, 0) 70%);
+    }
+
+    .winner-banner {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(7, 12, 27, 0.88);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 18px;
+      padding: 20px 24px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+
+    .winner-banner.show {
+      opacity: 1;
+    }
+
+    .winner-banner strong {
+      display: block;
+      font-size: 1.5rem;
+      margin-bottom: 6px;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 12px 18px 18px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      flex-wrap: wrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0.4);
+      }
+      to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(3.2);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .hud {
+        grid-template-columns: 1fr;
+      }
+
+      .fighter-card.right {
+        text-align: left;
+      }
+
+      .center-panel {
+        justify-items: start;
+      }
+
+      .arena {
+        height: 68vh;
+      }
+
+      .fighter {
+        width: 104px;
+        height: 104px;
+      }
     }
   </style>
 </head>
 <body>
-  <main>
-    <img src="icon-computer-512.png" alt="Aperçu du fichier PNG" />
-    <p>Fichier affiché : icon-computer-512.png</p>
+  <main class="game-shell">
+    <section class="hud">
+      <div class="fighter-card">
+        <div class="fighter-name">Fusée</div>
+        <div class="health-track"><div id="rocketHealth" class="health-bar rocket"></div></div>
+      </div>
+
+      <div class="center-panel">
+        <h1 class="title">Combat automatique</h1>
+        <div id="status" class="status">La bataille démarre...</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+          <button id="restartBtn" class="restart-btn" type="button">Relancer</button>
+          <button id="audioBtn" class="restart-btn" type="button" aria-pressed="false">Activer le son</button>
+        </div>
+      </div>
+
+      <div class="fighter-card right">
+        <div class="fighter-name">Alien</div>
+        <div class="health-track"><div id="alienHealth" class="health-bar alien"></div></div>
+      </div>
+    </section>
+
+    <section id="arena" class="arena">
+      <div id="starsFar" class="star-layer" aria-hidden="true"></div>
+      <div id="starsMid" class="star-layer" aria-hidden="true"></div>
+      <div id="starsNear" class="star-layer" aria-hidden="true"></div>
+
+      <div class="planet planet-two" aria-hidden="true">
+        <div class="planet-ring"></div>
+      </div>
+      <div class="planet planet-three" aria-hidden="true"></div>
+      <div class="planet planet-one" aria-hidden="true"></div>
+
+      <div id="rocket" class="fighter rocket" aria-label="Fusée combattante">
+        <img src="fusee.svg" alt="Fusée en pixel art" />
+      </div>
+
+      <div id="alien" class="fighter alien" aria-label="Alien combattant">
+        <img src="alien.svg" alt="Alien en pixel art" />
+      </div>
+
+      <div id="winnerBanner" class="winner-banner" aria-live="polite">
+        <strong id="winnerText">Victoire</strong>
+        <span id="winnerSubtext">Une nouvelle manche peut commencer.</span>
+      </div>
+    </section>
+
+    <div class="legend">
+      <span><span class="dot" style="background:#ff7f6b"></span>Missiles de la fusée</span>
+      <span><span class="dot" style="background:#7ed957"></span>Missiles de l'alien</span>
+      <span>Combat 100% automatique</span>
+    </div>
   </main>
+
+  <script>
+    const arena = document.getElementById('arena');
+    const rocketEl = document.getElementById('rocket');
+    const alienEl = document.getElementById('alien');
+    const rocketHealthEl = document.getElementById('rocketHealth');
+    const alienHealthEl = document.getElementById('alienHealth');
+    const statusEl = document.getElementById('status');
+    const restartBtn = document.getElementById('restartBtn');
+    const audioBtn = document.getElementById('audioBtn');
+    const winnerBanner = document.getElementById('winnerBanner');
+    const winnerText = document.getElementById('winnerText');
+    const winnerSubtext = document.getElementById('winnerSubtext');
+    const starLayers = [
+      document.getElementById('starsFar'),
+      document.getElementById('starsMid'),
+      document.getElementById('starsNear'),
+    ];
+
+    const config = {
+      maxHealth: 100,
+      rocketDamage: 10,
+      alienDamage: 12,
+      rocketCooldown: [500, 900],
+      alienCooldown: [650, 1050],
+      rocketMissileSpeed: 8,
+      alienMissileSpeed: 7,
+    };
+
+    let gameState;
+    let missiles = [];
+    let explosions = [];
+    let stars = [];
+    let audioState = {
+      ctx: null,
+      master: null,
+      music: null,
+      enabled: false,
+      started: false,
+      nextMusicEvent: 0,
+      nextBassEvent: 0,
+      nextPulseEvent: 0,
+      scaleIndex: 0,
+    };
+    let animationId = 0;
+    let lastTime = 0;
+
+    function randomBetween(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function randomInt(min, max) {
+      return Math.floor(randomBetween(min, max + 1));
+    }
+
+    function ensureAudio() {
+      if (audioState.ctx) return audioState.ctx;
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) {
+        statusEl.textContent = 'Audio non supporté sur ce navigateur.';
+        return null;
+      }
+
+      const ctx = new AudioCtx();
+      const master = ctx.createGain();
+      master.gain.value = 0.72;
+      master.connect(ctx.destination);
+
+      const music = ctx.createGain();
+      music.gain.value = 0.22;
+      music.connect(master);
+
+      audioState.ctx = ctx;
+      audioState.master = master;
+      audioState.music = music;
+      audioState.nextMusicEvent = ctx.currentTime + 0.2;
+      audioState.nextBassEvent = ctx.currentTime + 0.35;
+      audioState.nextPulseEvent = ctx.currentTime + 0.18;
+      return ctx;
+    }
+
+    function playTone({ time, frequency, duration, type = 'sine', gain = 0.1, attack = 0.01, release = 0.2, destination, detune = 0 }) {
+      const ctx = audioState.ctx;
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const amp = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(frequency, time);
+      osc.detune.setValueAtTime(detune, time);
+      amp.gain.setValueAtTime(0.0001, time);
+      amp.gain.linearRampToValueAtTime(gain, time + attack);
+      amp.gain.exponentialRampToValueAtTime(0.0001, time + duration + release);
+      osc.connect(amp);
+      amp.connect(destination || audioState.master);
+      osc.start(time);
+      osc.stop(time + duration + release + 0.02);
+    }
+
+    function playNoiseBurst({ time, duration = 0.24, gain = 0.12, destination, highpass = 300, lowpass = 2200 }) {
+      const ctx = audioState.ctx;
+      if (!ctx) return;
+      const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * duration)), ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i += 1) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      }
+
+      const source = ctx.createBufferSource();
+      const hp = ctx.createBiquadFilter();
+      const lp = ctx.createBiquadFilter();
+      const amp = ctx.createGain();
+
+      hp.type = 'highpass';
+      hp.frequency.value = highpass;
+      lp.type = 'lowpass';
+      lp.frequency.value = lowpass;
+
+      amp.gain.setValueAtTime(0.0001, time);
+      amp.gain.linearRampToValueAtTime(gain, time + 0.01);
+      amp.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+      source.buffer = buffer;
+      source.connect(hp);
+      hp.connect(lp);
+      lp.connect(amp);
+      amp.connect(destination || audioState.master);
+      source.start(time);
+      source.stop(time + duration + 0.02);
+    }
+
+    function enableAudio() {
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      ctx.resume();
+      audioState.enabled = true;
+      audioState.started = true;
+      audioBtn.textContent = 'Couper le son';
+      audioBtn.setAttribute('aria-pressed', 'true');
+      statusEl.textContent = 'Ambiance spatiale activée.';
+    }
+
+    function disableAudio() {
+      audioState.enabled = false;
+      audioBtn.textContent = 'Activer le son';
+      audioBtn.setAttribute('aria-pressed', 'false');
+      if (audioState.master && audioState.ctx) {
+        audioState.master.gain.cancelScheduledValues(audioState.ctx.currentTime);
+        audioState.master.gain.setTargetAtTime(0.0001, audioState.ctx.currentTime, 0.08);
+        setTimeout(() => {
+          if (audioState.master) audioState.master.gain.value = 0.72;
+        }, 180);
+      }
+    }
+
+    function toggleAudio() {
+      if (!audioState.enabled) {
+        enableAudio();
+      } else {
+        disableAudio();
+      }
+    }
+
+    function playRocketShot() {
+      if (!audioState.enabled || !audioState.ctx) return;
+      const t = audioState.ctx.currentTime;
+      playTone({ time: t, frequency: 760, duration: 0.05, type: 'sawtooth', gain: 0.05, attack: 0.002, release: 0.08 });
+      playTone({ time: t + 0.01, frequency: 1240, duration: 0.08, type: 'triangle', gain: 0.04, attack: 0.002, release: 0.11, detune: 8 });
+    }
+
+    function playAlienShot() {
+      if (!audioState.enabled || !audioState.ctx) return;
+      const t = audioState.ctx.currentTime;
+      playTone({ time: t, frequency: 240, duration: 0.09, type: 'square', gain: 0.045, attack: 0.003, release: 0.12, detune: -12 });
+      playTone({ time: t + 0.015, frequency: 340, duration: 0.11, type: 'sine', gain: 0.035, attack: 0.004, release: 0.16, detune: 17 });
+    }
+
+    function playImpact(targetName) {
+      if (!audioState.enabled || !audioState.ctx) return;
+      const t = audioState.ctx.currentTime;
+      playNoiseBurst({ time: t, duration: 0.22, gain: targetName === 'rocket' ? 0.13 : 0.11, highpass: 180, lowpass: 2400 });
+      playTone({ time: t, frequency: targetName === 'rocket' ? 120 : 160, duration: 0.09, type: 'triangle', gain: 0.05, attack: 0.002, release: 0.18 });
+      playTone({ time: t + 0.02, frequency: targetName === 'rocket' ? 86 : 110, duration: 0.14, type: 'sine', gain: 0.045, attack: 0.002, release: 0.24 });
+    }
+
+    function playVictory(winner) {
+      if (!audioState.enabled || !audioState.ctx) return;
+      const t = audioState.ctx.currentTime;
+      const notes = winner === 'rocket' ? [392, 523.25, 659.25, 783.99] : [329.63, 392, 493.88, 659.25];
+      notes.forEach((note, index) => {
+        playTone({ time: t + index * 0.11, frequency: note, duration: 0.16, type: 'triangle', gain: 0.06, attack: 0.01, release: 0.22 });
+        playTone({ time: t + index * 0.11, frequency: note * 0.5, duration: 0.18, type: 'sine', gain: 0.03, attack: 0.01, release: 0.24 });
+      });
+    }
+
+    function updateMusic() {
+      if (!audioState.enabled || !audioState.ctx || !audioState.music) return;
+      const ctx = audioState.ctx;
+      const now = ctx.currentTime;
+      const scale = [220, 246.94, 277.18, 329.63, 369.99, 440, 493.88, 554.37];
+      const highScale = [440, 493.88, 554.37, 659.25, 739.99, 880];
+
+      while (audioState.nextPulseEvent < now + 0.35) {
+        const pulseTime = audioState.nextPulseEvent;
+        playTone({ time: pulseTime, frequency: 110, duration: 0.08, type: 'sine', gain: 0.025, attack: 0.004, release: 0.14, destination: audioState.music });
+        playTone({ time: pulseTime, frequency: 220, duration: 0.04, type: 'triangle', gain: 0.01, attack: 0.002, release: 0.08, destination: audioState.music });
+        audioState.nextPulseEvent += randomBetween(0.32, 0.52);
+      }
+
+      while (audioState.nextBassEvent < now + 0.5) {
+        const bassTime = audioState.nextBassEvent;
+        const base = scale[randomInt(0, scale.length - 1)] / 2;
+        playTone({ time: bassTime, frequency: base, duration: randomBetween(0.25, 0.45), type: 'triangle', gain: 0.035, attack: 0.02, release: 0.24, destination: audioState.music });
+        audioState.nextBassEvent += randomBetween(0.6, 1.15);
+      }
+
+      while (audioState.nextMusicEvent < now + 0.7) {
+        const noteTime = audioState.nextMusicEvent;
+        const note = highScale[randomInt(0, highScale.length - 1)] * randomBetween(0.99, 1.01);
+        playTone({ time: noteTime, frequency: note, duration: randomBetween(0.28, 0.7), type: Math.random() > 0.55 ? 'sine' : 'triangle', gain: 0.022, attack: 0.03, release: 0.35, destination: audioState.music, detune: randomBetween(-8, 8) });
+        if (Math.random() > 0.65) {
+          playTone({ time: noteTime + 0.08, frequency: note * 1.5, duration: 0.16, type: 'sine', gain: 0.012, attack: 0.02, release: 0.22, destination: audioState.music, detune: randomBetween(-4, 4) });
+        }
+        audioState.nextMusicEvent += randomBetween(0.24, 0.68);
+      }
+    }
+
+    function arenaBounds() {
+      return {
+        width: arena.clientWidth,
+        height: arena.clientHeight,
+      };
+    }
+
+    function createInitialState() {
+      const { width, height } = arenaBounds();
+      return {
+        running: true,
+        winner: null,
+        rocket: {
+          name: 'Fusée',
+          x: width * 0.22,
+          y: height * 0.52,
+          health: config.maxHealth,
+          radius: 34,
+          phase: Math.random() * Math.PI * 2,
+          cooldown: randomInt(...config.rocketCooldown),
+        },
+        alien: {
+          name: 'Alien',
+          x: width * 0.78,
+          y: height * 0.48,
+          health: config.maxHealth,
+          radius: 34,
+          phase: Math.random() * Math.PI * 2,
+          cooldown: randomInt(...config.alienCooldown),
+        },
+      };
+    }
+
+    function createStars() {
+      stars.forEach((star) => star.el.remove());
+      stars = [];
+      starLayers.forEach((layer) => {
+        layer.innerHTML = '';
+      });
+
+      const { width, height } = arenaBounds();
+      const layerConfigs = [
+        { count: 34, speed: 0.12, size: [1, 2.2], opacity: [0.25, 0.55], drift: 0.04 },
+        { count: 24, speed: 0.28, size: [1.4, 3.2], opacity: [0.35, 0.75], drift: 0.08 },
+        { count: 14, speed: 0.55, size: [2, 4.6], opacity: [0.55, 1], drift: 0.14 },
+      ];
+
+      layerConfigs.forEach((configLayer, layerIndex) => {
+        for (let i = 0; i < configLayer.count; i += 1) {
+          const el = document.createElement('div');
+          el.className = 'star';
+          const size = randomBetween(configLayer.size[0], configLayer.size[1]);
+          const star = {
+            el,
+            x: randomBetween(0, width),
+            y: randomBetween(0, height),
+            size,
+            speed: configLayer.speed * randomBetween(0.8, 1.2),
+            drift: configLayer.drift * randomBetween(-1, 1),
+            twinkle: randomBetween(0.0015, 0.004),
+            phase: randomBetween(0, Math.PI * 2),
+            opacityMin: configLayer.opacity[0],
+            opacityMax: configLayer.opacity[1],
+            layerIndex,
+          };
+
+          el.style.width = size + 'px';
+          el.style.height = size + 'px';
+          starLayers[layerIndex].appendChild(el);
+          stars.push(star);
+        }
+      });
+    }
+
+    function updateStars(time, delta) {
+      const { width, height } = arenaBounds();
+      stars.forEach((star) => {
+        star.x -= star.speed * delta;
+        star.y += star.drift * delta;
+
+        if (star.x < -8) {
+          star.x = width + randomBetween(0, 30);
+          star.y = randomBetween(0, height);
+        }
+        if (star.y < -8) star.y = height + 8;
+        if (star.y > height + 8) star.y = -8;
+
+        const opacity = star.opacityMin + ((Math.sin(time * star.twinkle + star.phase) + 1) / 2) * (star.opacityMax - star.opacityMin);
+        const depthScale = 1 + star.layerIndex * 0.08;
+
+        star.el.style.transform = 'translate(' + star.x + 'px, ' + star.y + 'px) scale(' + depthScale + ')';
+        star.el.style.opacity = opacity.toFixed(3);
+      });
+    }
+
+    function clearDynamicElements() {
+      missiles.forEach(({ el }) => el.remove());
+      explosions.forEach(({ el }) => el.remove());
+      missiles = [];
+      explosions = [];
+    }
+
+    function resetGame() {
+      clearDynamicElements();
+      createStars();
+      gameState = createInitialState();
+      winnerBanner.classList.remove('show');
+      statusEl.textContent = 'La bataille démarre...';
+      updateHealthUI();
+      renderFighters(0);
+    }
+
+    function updateHealthUI() {
+      rocketHealthEl.style.width = Math.max(0, gameState.rocket.health) + '%';
+      alienHealthEl.style.width = Math.max(0, gameState.alien.health) + '%';
+    }
+
+    function renderFighters(time) {
+      const { height } = arenaBounds();
+      const rocketYOffset = Math.sin(time / 420 + gameState.rocket.phase) * 22;
+      const alienYOffset = Math.sin(time / 470 + gameState.alien.phase) * 26;
+      const rocketTilt = Math.sin(time / 300 + gameState.rocket.phase) * 4;
+      const alienTilt = Math.sin(time / 340 + gameState.alien.phase) * -4;
+
+      rocketEl.style.left = gameState.rocket.x + 'px';
+      rocketEl.style.top = Math.min(height - 70, Math.max(70, gameState.rocket.y + rocketYOffset)) + 'px';
+      rocketEl.style.transform = 'translate(-50%, -50%) rotate(' + rocketTilt + 'deg)';
+
+      alienEl.style.left = gameState.alien.x + 'px';
+      alienEl.style.top = Math.min(height - 70, Math.max(70, gameState.alien.y + alienYOffset)) + 'px';
+      alienEl.style.transform = 'translate(-50%, -50%) rotate(' + alienTilt + 'deg)';
+    }
+
+    function spawnMissile(owner) {
+      if (!gameState.running) return;
+
+      const source = owner === 'rocket' ? gameState.rocket : gameState.alien;
+      const target = owner === 'rocket' ? gameState.alien : gameState.rocket;
+      const el = document.createElement('div');
+      el.className = 'missile ' + owner;
+      arena.appendChild(el);
+
+      const missile = {
+        owner,
+        x: source.x + (owner === 'rocket' ? 48 : -48),
+        y: parseFloat((owner === 'rocket' ? rocketEl.style.top : alienEl.style.top)) || source.y,
+        vx: owner === 'rocket' ? config.rocketMissileSpeed : -config.alienMissileSpeed,
+        vy: ((target.y - source.y) / Math.max(140, Math.abs(target.x - source.x))) * 2.2,
+        width: 30,
+        height: 8,
+        damage: owner === 'rocket' ? config.rocketDamage : config.alienDamage,
+        el,
+      };
+
+      missiles.push(missile);
+      if (owner === 'rocket') {
+        playRocketShot();
+      } else {
+        playAlienShot();
+      }
+      statusEl.textContent = owner === 'rocket' ? 'La fusée tire un missile !' : 'L\'alien riposte avec un plasma !';
+    }
+
+    function triggerHit(targetName, x, y) {
+      const targetEl = targetName === 'rocket' ? rocketEl : alienEl;
+      targetEl.classList.add('hit');
+      setTimeout(() => targetEl.classList.remove('hit'), 120);
+      playImpact(targetName);
+
+      const el = document.createElement('div');
+      el.className = 'explosion ' + targetName;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      arena.appendChild(el);
+      explosions.push({ el, createdAt: performance.now() });
+
+      setTimeout(() => {
+        el.remove();
+        explosions = explosions.filter((explosion) => explosion.el !== el);
+      }, 430);
+    }
+
+    function checkCollision(missile, fighter) {
+      const fighterTop = parseFloat((fighter === gameState.rocket ? rocketEl.style.top : alienEl.style.top)) || fighter.y;
+      const dx = missile.x - fighter.x;
+      const dy = missile.y - fighterTop;
+      return Math.hypot(dx, dy) < fighter.radius + 10;
+    }
+
+    function endGame(winner) {
+      gameState.running = false;
+      gameState.winner = winner;
+      winnerText.textContent = winner === 'rocket' ? 'La fusée gagne !' : 'L\'alien gagne !';
+      winnerSubtext.textContent = 'Clique sur « Relancer » pour recommencer une manche.';
+      winnerBanner.classList.add('show');
+      playVictory(winner);
+      statusEl.textContent = winner === 'rocket'
+        ? 'Victoire de la fusée après un duel explosif.'
+        : 'L\'alien remporte le combat interstellaire.';
+    }
+
+    function updateMissiles() {
+      const { width, height } = arenaBounds();
+
+      missiles = missiles.filter((missile) => {
+        missile.x += missile.vx;
+        missile.y += missile.vy;
+        missile.el.style.left = missile.x + 'px';
+        missile.el.style.top = missile.y + 'px';
+
+        const target = missile.owner === 'rocket' ? gameState.alien : gameState.rocket;
+        if (checkCollision(missile, target)) {
+          target.health -= missile.damage;
+          updateHealthUI();
+          triggerHit(missile.owner === 'rocket' ? 'alien' : 'rocket', missile.x, missile.y);
+          missile.el.remove();
+
+          if (target.health <= 0 && gameState.running) {
+            endGame(missile.owner);
+          }
+          return false;
+        }
+
+        if (missile.x < -40 || missile.x > width + 40 || missile.y < -30 || missile.y > height + 30) {
+          missile.el.remove();
+          return false;
+        }
+
+        return true;
+      });
+    }
+
+    function updateAI(delta) {
+      if (!gameState.running) return;
+
+      gameState.rocket.cooldown -= delta;
+      gameState.alien.cooldown -= delta;
+
+      if (gameState.rocket.cooldown <= 0) {
+        spawnMissile('rocket');
+        gameState.rocket.cooldown = randomInt(...config.rocketCooldown);
+      }
+
+      if (gameState.alien.cooldown <= 0) {
+        spawnMissile('alien');
+        gameState.alien.cooldown = randomInt(...config.alienCooldown);
+      }
+    }
+
+    function animate(time) {
+      const delta = Math.min(32, time - lastTime || 16);
+      lastTime = time;
+
+      updateStars(time, delta);
+      updateMusic();
+      renderFighters(time);
+      updateAI(delta);
+      updateMissiles();
+
+      animationId = requestAnimationFrame(animate);
+    }
+
+    restartBtn.addEventListener('click', () => {
+      resetGame();
+    });
+
+    audioBtn.addEventListener('click', () => {
+      toggleAudio();
+    });
+
+    window.addEventListener('resize', () => {
+      const { width, height } = arenaBounds();
+      if (!gameState) return;
+      gameState.rocket.x = width * 0.22;
+      gameState.alien.x = width * 0.78;
+      gameState.rocket.y = height * 0.52;
+      gameState.alien.y = height * 0.48;
+      createStars();
+      renderFighters(lastTime || 0);
+    });
+
+    resetGame();
+    cancelAnimationFrame(animationId);
+    animationId = requestAnimationFrame(animate);
+  </script>
 </body>
 </html>

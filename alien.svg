@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160" shape-rendering="crispEdges">
+  <rect width="160" height="160" fill="#00000000"/>
+
+  <!-- Antennas -->
+  <rect x="48" y="16" width="8" height="16" fill="#4b8f29"/>
+  <rect x="104" y="16" width="8" height="16" fill="#4b8f29"/>
+  <rect x="40" y="8" width="8" height="8" fill="#7ed957"/>
+  <rect x="112" y="8" width="8" height="8" fill="#7ed957"/>
+
+  <!-- Head outline -->
+  <rect x="40" y="32" width="80" height="8" fill="#1f2a1f"/>
+  <rect x="32" y="40" width="96" height="8" fill="#1f2a1f"/>
+  <rect x="24" y="48" width="112" height="8" fill="#1f2a1f"/>
+  <rect x="24" y="56" width="112" height="8" fill="#1f2a1f"/>
+  <rect x="16" y="64" width="128" height="8" fill="#1f2a1f"/>
+  <rect x="16" y="72" width="128" height="8" fill="#1f2a1f"/>
+  <rect x="24" y="80" width="112" height="8" fill="#1f2a1f"/>
+  <rect x="24" y="88" width="112" height="8" fill="#1f2a1f"/>
+  <rect x="32" y="96" width="96" height="8" fill="#1f2a1f"/>
+  <rect x="40" y="104" width="80" height="8" fill="#1f2a1f"/>
+
+  <!-- Head fill -->
+  <rect x="40" y="40" width="80" height="8" fill="#7ed957"/>
+  <rect x="32" y="48" width="96" height="8" fill="#7ed957"/>
+  <rect x="32" y="56" width="96" height="8" fill="#7ed957"/>
+  <rect x="24" y="64" width="112" height="8" fill="#7ed957"/>
+  <rect x="24" y="72" width="112" height="8" fill="#7ed957"/>
+  <rect x="32" y="80" width="96" height="8" fill="#7ed957"/>
+  <rect x="32" y="88" width="96" height="8" fill="#7ed957"/>
+  <rect x="40" y="96" width="80" height="8" fill="#7ed957"/>
+
+  <!-- Eyes -->
+  <rect x="40" y="56" width="24" height="8" fill="#1f2a1f"/>
+  <rect x="32" y="64" width="40" height="16" fill="#1f2a1f"/>
+  <rect x="96" y="56" width="24" height="8" fill="#1f2a1f"/>
+  <rect x="88" y="64" width="40" height="16" fill="#1f2a1f"/>
+  <rect x="40" y="64" width="24" height="8" fill="#ffffff"/>
+  <rect x="96" y="64" width="24" height="8" fill="#ffffff"/>
+
+  <!-- Mouth -->
+  <rect x="64" y="88" width="32" height="8" fill="#4b8f29"/>
+  <rect x="72" y="96" width="16" height="8" fill="#4b8f29"/>
+
+  <!-- Neck -->
+  <rect x="64" y="112" width="32" height="8" fill="#4b8f29"/>
+  <rect x="64" y="120" width="32" height="8" fill="#4b8f29"/>
+
+  <!-- Body -->
+  <rect x="48" y="128" width="64" height="8" fill="#1f2a1f"/>
+  <rect x="40" y="136" width="80" height="8" fill="#1f2a1f"/>
+  <rect x="48" y="144" width="64" height="8" fill="#1f2a1f"/>
+  <rect x="56" y="136" width="48" height="8" fill="#7ed957"/>
+  <rect x="56" y="144" width="48" height="8" fill="#7ed957"/>
+</svg>
